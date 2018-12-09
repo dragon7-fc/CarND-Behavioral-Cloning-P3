@@ -39,7 +39,8 @@ class Model:
     
     def load_csv(self):
         """
-        Load training data and split it into training and validation set
+        Load csv file and split it into training and validation set
+
         """
         data_df = pd.read_csv(os.path.join(self.data_dir, 'driving_log.csv'))
 
@@ -48,20 +49,26 @@ class Model:
 
         self.X_train, self.X_valid, self.y_train, self.y_valid = train_test_split(X, y, test_size=self.train_test_split, random_state=0)
 
-
     def build_model(self):
+        """
+        Build model network architecture
+
+        """
         model = Sequential()
         model.add(Lambda(lambda x: x/127.5-1.0, input_shape=self.__INPUT_SHAPE))
-        model.add(Conv2D(24, 5, 5, activation='elu', subsample=(2, 2)))
-        model.add(Conv2D(36, 5, 5, activation='elu', subsample=(2, 2)))
-        model.add(Conv2D(48, 5, 5, activation='elu', subsample=(2, 2)))
-        model.add(Conv2D(64, 3, 3, activation='elu'))
-        model.add(Conv2D(64, 3, 3, activation='elu'))
+        model.add(Conv2D(24, (5, 5), strides=(2, 2), activation='relu'))
+        model.add(Conv2D(36, (5, 5), strides=(2, 2), activation='relu'))
+        model.add(Conv2D(48, (5, 5), strides=(2, 2), activation='relu'))
+        model.add(Conv2D(64, (3, 3), activation='relu'))
+        model.add(Conv2D(64, (3, 3), activation='relu'))
         model.add(Dropout(self.dropout))
         model.add(Flatten())
-        model.add(Dense(100, activation='elu'))
-        model.add(Dense(50, activation='elu'))
-        model.add(Dense(10, activation='elu'))
+        model.add(Dense(100, activation='relu'))
+        model.add(Dropout(self.dropout))
+        model.add(Dense(50, activation='relu'))
+        model.add(Dropout(self.dropout))
+        model.add(Dense(10, activation='relu'))
+        model.add(Dropout(self.dropout))
         model.add(Dense(1))
         model.summary()
         self.model = model
@@ -69,44 +76,46 @@ class Model:
     def load_image(self, filename):
         """
         Load RGB images from a file
+
         """
         return mpimg.imread(os.path.join(self.data_dir, filename.strip()))
 
     def img_crop(self, img):
         """
-        Crop the image (removing the sky at the top and the car front at the bottom)
+        Crop the image (removing the sky at the top and the car front at the bottom).
+        
         """
         return img[60:-25, :, :] # remove the sky and the car front
-
 
     def img_resize(self, img):
         """
         Resize the image to the input shape used by the network model
+        
         """
         return cv2.resize(img, (self.__IMAGE_WIDTH, self.__IMAGE_HEIGHT), cv2.INTER_AREA)
-
 
     def img_rgb2yuv(self, img):
         """
         Convert the image from RGB to YUV (This is what the NVIDIA model does)
+
         """
         return cv2.cvtColor(img, cv2.COLOR_RGB2YUV)
-
 
     def img_preprocess(self, img):
         """
         Combine all preprocess functions into one
+
         """
         img = self.img_crop(img)
         img = self.img_resize(img)
         img = self.img_rgb2yuv(img)
         return img
 
-
-    def __choose_image(self, center, left, right, steering_angle):
+    def __random_choose_image(self, center, left, right, steering_angle):
         """
         Randomly choose an image from the center, left or right, and adjust
         the steering angle.
+
         """
         choice = np.random.choice(3)
         if choice == 0:
@@ -115,20 +124,20 @@ class Model:
             return self.load_image(right), steering_angle - 0.2
         return self.load_image(center), steering_angle
 
-
     def img_random_flip(self, img, steering_angle):
         """
-        Randomly flipt the image left <-> right, and adjust the steering angle.
+        Randomly flip the image left <-> right, and adjust the steering angle.
+
         """
         if np.random.rand() < 0.5:
             img = cv2.flip(img, 1)
             steering_angle = -steering_angle
         return img, steering_angle
-
-
-    def img_random_shift(self, img, steering_angle, range_x, range_y):
+    
+    def img_random_shift(self, img, steering_angle, range_x=100, range_y=10):
         """
-        Randomly shift the image virtially and horizontally.
+        Randomly shift the image virtically and horizontally.
+
         """
         shift_x = range_x * (np.random.rand() - 0.5)
         shift_y = range_y * (np.random.rand() - 0.5)
@@ -138,10 +147,22 @@ class Model:
         img = cv2.warpAffine(img, m, (width, height))
         return img, steering_angle
 
+    def img_random_rotate(self, img, steering_angle, angle=30):
+        """
+        Randomly rotate the image.
 
+        """
+        tilt = np.random.randint(-1*angle, angle+1)
+        height, width = img.shape[:2]
+        M = cv2.getRotationMatrix2D((height/2, width/2), tilt, 1)
+        img = cv2.warpAffine(img, M, (width, height))
+        steering_angle += steering_angle * float(tilt/360)*0.001
+        return img, steering_angle
+    
     def img_random_shadow(self, img):
         """
-        Generates and adds random shadow
+        Generates and adds random shadow.
+
         """
         # (x1, y1) and (x2, y2) forms a line
         # xm, ym gives all the locations of the image
@@ -166,10 +187,10 @@ class Model:
         hls[:, :, 1][cond] = hls[:, :, 1][cond] * s_ratio
         return cv2.cvtColor(hls, cv2.COLOR_HLS2RGB)
 
-
     def img_random_brightness(self, img):
         """
         Randomly adjust brightness of the image.
+        
         """
         # HSV (Hue, Saturation, Value) is also called HSB ('B' for Brightness).
         hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
@@ -177,23 +198,24 @@ class Model:
         hsv[:,:,2] =  hsv[:,:,2] * ratio
         return cv2.cvtColor(hsv, cv2.COLOR_HSV2RGB)
 
-
-    def __augument(self, center, left, right, steering_angle, range_x=100, range_y=10):
+    def __augment(self, center, left, right, steering_angle):
         """
-        Generate an augumented image and adjust steering angle.
+        Generate an augmented image and adjust steering angle.
         (The steering angle is associated with the center image)
+
         """
-        img, steering_angle = self.__choose_image(center, left, right, steering_angle)
+        img, steering_angle = self.__random_choose_image(center, left, right, steering_angle)
         img, steering_angle = self.img_random_flip(img, steering_angle)
-        img, steering_angle = self.img_random_shift(img, steering_angle, range_x, range_y)
+        img, steering_angle = self.img_random_shift(img, steering_angle)
+        img, steering_angle = self.img_random_rotate(img, steering_angle)
         img = self.img_random_shadow(img)
         img = self.img_random_brightness(img)
         return img, steering_angle
 
-
     def __batch_generator(self, filenames, steering_angles, is_training):
         """
-        Generate training image give image paths and associated steering angles
+        Generate training/validation image batch given image paths and associated steering angles.
+        
         """
         imgs = np.empty([self.batch_size, self.__IMAGE_HEIGHT, self.__IMAGE_WIDTH, self.__IMAGE_CHANNEL])
         steers = np.empty(self.batch_size)
@@ -204,7 +226,7 @@ class Model:
                 steering_angle = steering_angles[index]
                 # augmentation
                 if is_training and np.random.rand() < 0.6:
-                    img, steering_angle = self.__augument(center, left, right, steering_angle)
+                    img, steering_angle = self.__augment(center, left, right, steering_angle)
                 else:
                     img = self.load_image(center) 
                 # add the image and steering angle to the batch
@@ -279,7 +301,7 @@ if __name__ == '__main__':
         '--batch_size',
         type=int,
         help='batch size',
-        default=40
+        default=32
     )
     parser.add_argument(
         '--learning_rate',
