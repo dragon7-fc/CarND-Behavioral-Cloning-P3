@@ -307,7 +307,7 @@ if __name__ == '__main__':
         '--learning_rate',
         type=float,
         help='learning rate',
-        default=1.0e-4
+        default=1.0e-5
     )
     args = parser.parse_args()
     
