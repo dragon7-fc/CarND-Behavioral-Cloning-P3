@@ -12,13 +12,9 @@ The goals / steps of this project are the following:
 
 [//]: # (Image References)
 
-[image1]: ./examples/placeholder.png "Model Visualization"
-[image2]: ./examples/placeholder.png "Grayscaling"
-[image3]: ./examples/placeholder_small.png "Recovery Image"
-[image4]: ./examples/placeholder_small.png "Recovery Image"
-[image5]: ./examples/placeholder_small.png "Recovery Image"
-[image6]: ./examples/placeholder_small.png "Normal Image"
-[image7]: ./examples/placeholder_small.png "Flipped Image"
+[image1]: ./images/cnn-architecture-nvidia.png "Model Visualization"
+[image2]: ./images/aug.jpg "Data augmentation"
+[image3]: ./images/pre.jpg "Preprocessing"
 
 ---
 ### Files Submitted & Code Quality
@@ -85,36 +81,62 @@ At the end of the process, the vehicle is able to drive autonomously around the 
 
 #### 2. Final Model Architecture
 
-The final model architecture (model.py lines 18-24) consisted of a convolution neural network with the following layers and layer sizes ...
+The final model architecture (model.py lines 54-77) consisted of a convolution neural network with the following layers and layer sizes ...
 
-Here is a visualization of the architecture (note: visualizing the architecture is optional according to the project rubric)
+Here is a visualization of the architecture.
 
 ![alt text][image1]
 
+Here is a more detatil viewpoint.
+
+```
+Layer (type)                 Output Shape              Param #
+=================================================================
+lambda_1 (Lambda)            (None, 66, 200, 3)        0
+_________________________________________________________________
+conv2d_1 (Conv2D)            (None, 31, 98, 24)        1824
+_________________________________________________________________
+conv2d_2 (Conv2D)            (None, 14, 47, 36)        21636
+
+conv2d_3 (Conv2D)            (None, 5, 22, 48)         43248
+_________________________________________________________________
+dropout_1 (Dropout)          (None, 5, 22, 48)         0
+_________________________________________________________________
+conv2d_4 (Conv2D)            (None, 3, 20, 64)         27712
+_________________________________________________________________
+conv2d_5 (Conv2D)            (None, 1, 18, 64)         36928
+_________________________________________________________________
+dropout_2 (Dropout)          (None, 1, 18, 64)         0
+_________________________________________________________________
+flatten_1 (Flatten)          (None, 1152)              0
+_________________________________________________________________
+dense_1 (Dense)              (None, 100)               115300
+_________________________________________________________________
+dropout_3 (Dropout)          (None, 100)               0
+_________________________________________________________________
+dense_2 (Dense)              (None, 50)                5050
+_________________________________________________________________
+dropout_4 (Dropout)          (None, 50)                0
+_________________________________________________________________
+dense_3 (Dense)              (None, 10)                510
+_________________________________________________________________
+dropout_5 (Dropout)          (None, 10)                0
+_________________________________________________________________
+dense_4 (Dense)              (None, 1)                 11
+=================================================================
+Total params: 252,219
+Trainable params: 252,219
+Non-trainable params: 0
+```
+
 #### 3. Creation of the Training Set & Training Process
 
-To capture good driving behavior, I first recorded two laps on track one using center lane driving. Here is an example image of center lane driving:
+To augment the data sat, I do some random flip, shift, rotate, shadow, and brightness. Below is one example of data augmentation.
 
 ![alt text][image2]
 
-I then recorded the vehicle recovering from the left side and right sides of the road back to center so that the vehicle would learn to .... These images show what a recovery looks like starting from ... :
+After the collection process, I had X number of data points. I then preprocessed this data by crop lane portion of the image and resize to [66, 200] as model requirement. Then convert to YUV color space.  The detail process is as below.
 
 ![alt text][image3]
-![alt text][image4]
-![alt text][image5]
-
-Then I repeated this process on track two in order to get more data points.
-
-To augment the data sat, I also flipped images and angles thinking that this would ... For example, here is an image that has then been flipped:
-
-![alt text][image6]
-![alt text][image7]
-
-Etc ....
-
-After the collection process, I had X number of data points. I then preprocessed this data by ...
-
-
-I finally randomly shuffled the data set and put Y% of the data into a validation set. 
 
 I used this training data for training the model. The validation set helped determine if the model was over or under fitting. The ideal number of epochs was Z as evidenced by ... I used an adam optimizer so that manually training the learning rate wasn't necessary.

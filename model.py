@@ -15,6 +15,7 @@ from keras.models import Sequential
 from keras.layers import Lambda, Conv2D, MaxPooling2D, Dropout, Dense, Flatten
 from keras.callbacks import ModelCheckpoint
 from keras.optimizers import Adam
+from keras.regularizers import l2
 
 class Model:
     __IMAGE_HEIGHT=66
@@ -28,6 +29,7 @@ class Model:
             self.data_dir = parse_args.data_dir
             self.train_test_split = parse_args.train_test_split
             self.dropout = parse_args.dropout
+            self.l2_regularizer = parse_args.l2_regularizer
             self.epoch = parse_args.epoch
             self.batch_size = parse_args.batch_size
             self.steps_per_epoch = parse_args.steps_per_epoch
@@ -59,15 +61,16 @@ class Model:
         model.add(Conv2D(24, (5, 5), strides=(2, 2), activation='relu'))
         model.add(Conv2D(36, (5, 5), strides=(2, 2), activation='relu'))
         model.add(Conv2D(48, (5, 5), strides=(2, 2), activation='relu'))
+        model.add(Dropout(self.dropout))
         model.add(Conv2D(64, (3, 3), activation='relu'))
         model.add(Conv2D(64, (3, 3), activation='relu'))
         model.add(Dropout(self.dropout))
         model.add(Flatten())
-        model.add(Dense(100, activation='relu'))
+        model.add(Dense(100, activation='relu', W_regularizer=l2(self.l2_regularizer)))
         model.add(Dropout(self.dropout))
-        model.add(Dense(50, activation='relu'))
+        model.add(Dense(50, activation='relu', W_regularizer=l2(self.l2_regularizer)))
         model.add(Dropout(self.dropout))
-        model.add(Dense(10, activation='relu'))
+        model.add(Dense(10, activation='relu', W_regularizer=l2(self.l2_regularizer)))
         model.add(Dropout(self.dropout))
         model.add(Dense(1))
         model.summary()
@@ -284,6 +287,12 @@ if __name__ == '__main__':
         type=float, 
         help='drop out probability',          
         default=0.5
+    )
+    parser.add_argument(
+        '--l2_regularizer',
+        type=float, 
+        help='fraction of l2 regularizer',          
+        default=1.0e-5
     )
     parser.add_argument(
         '--epoch',
