@@ -35,7 +35,7 @@ class Model:
             self.steps_per_epoch = parse_args.steps_per_epoch
             self.batch_size = parse_args.batch_size
             self.learning_rate = parse_args.learning_rate
-            self.save_best_only = True
+            self.output_h5 = parse_args.output_h5
         else:
             self.data_dir = 'data'
     
@@ -61,7 +61,6 @@ class Model:
         model.add(Conv2D(24, (5, 5), strides=(2, 2), activation='relu'))
         model.add(Conv2D(36, (5, 5), strides=(2, 2), activation='relu'))
         model.add(Conv2D(48, (5, 5), strides=(2, 2), activation='relu'))
-        model.add(Dropout(self.dropout))
         model.add(Conv2D(64, (3, 3), activation='relu'))
         model.add(Conv2D(64, (3, 3), activation='relu'))
         model.add(Dropout(self.dropout))
@@ -245,10 +244,10 @@ class Model:
         Train the model
         """
         checkpoint = ModelCheckpoint(
-            'model-{epoch:03d}.h5',
+            self.output_h5,
             monitor='val_loss',
             verbose=0,
-            save_best_only=self.save_best_only,
+            save_best_only=True,
             mode='auto'
         )
 
@@ -292,7 +291,7 @@ if __name__ == '__main__':
         '--l2_regularizer',
         type=float, 
         help='fraction of l2 regularizer',          
-        default=1.0e-5
+        default=1.0e-6
     )
     parser.add_argument(
         '--epoch',
@@ -316,7 +315,13 @@ if __name__ == '__main__':
         '--learning_rate',
         type=float,
         help='learning rate',
-        default=1.0e-5
+        default=1.0e-4
+    )
+    parser.add_argument(
+        '--output_h5',
+        type=str,
+        help='output model file',
+        default='model.h5'
     )
     args = parser.parse_args()
     
@@ -325,4 +330,4 @@ if __name__ == '__main__':
     model = Model(args)
     model.load_csv()
     model.build_model()
-    model.train()
+    # model.train()

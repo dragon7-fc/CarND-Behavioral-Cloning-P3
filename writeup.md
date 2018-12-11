@@ -15,6 +15,7 @@ The goals / steps of this project are the following:
 [image1]: ./images/cnn-architecture-nvidia.png "Model Visualization"
 [image2]: ./images/aug.jpg "Data augmentation"
 [image3]: ./images/pre.jpg "Preprocessing"
+[image4]: ./images/run1.gif "run1 video"
 
 ---
 ### Files Submitted & Code Quality
@@ -135,8 +136,14 @@ To augment the data sat, I do some random flip, shift, rotate, shadow, and brigh
 
 ![alt text][image2]
 
-After the collection process, I had X number of data points. I then preprocessed this data by crop lane portion of the image and resize to [66, 200] as model requirement. Then convert to YUV color space.  The detail process is as below.
+In each batch, I randomly generate 60% training data.
+
+After the collection process, in each epoch I had almost 400,000 of data points. I then preprocessed this data by crop lane portion of the image and resize to [66, 200] as model requirement. Then convert to YUV color space.  The detail process is as below.
 
 ![alt text][image3]
 
-I used this training data for training the model. The validation set helped determine if the model was over or under fitting. The ideal number of epochs was Z as evidenced by ... I used an adam optimizer so that manually training the learning rate wasn't necessary.
+I used this training data for training the model. The validation set helped determine if the model was over or under fitting. The ideal number of epochs was 10 as evidenced by the total lost not decreased anymore. I used an adam optimizer so that manually training the learning rate wasn't necessary.
+
+Here is my final video output.
+
+![alt text][image4]
