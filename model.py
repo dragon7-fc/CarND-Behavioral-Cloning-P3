@@ -330,4 +330,4 @@ if __name__ == '__main__':
     model = Model(args)
     model.load_csv()
     model.build_model()
-    # model.train()
+    model.train()
