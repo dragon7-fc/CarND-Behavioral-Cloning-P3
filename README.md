@@ -22,6 +22,8 @@ The goals / steps of this project are the following:
 This lab requires:
 
 * [CarND Term1 Starter Kit](https://github.com/udacity/CarND-Term1-Starter-Kit)
+* [sample driving data](https://d17h27t6h515a5.cloudfront.net/topher/2016/December/584f6edd_data/data.zip)
+* [simulator](https://github.com/udacity/self-driving-car-sim)
 
 ### Files Submitted & Code Quality
 
